@@ -1,0 +1,169 @@
+[build-system]
+requires = ["setuptools>=68.2.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "project"
+version = "1.0.0"
+requires-python = ">=3.9"
+description = ""
+readme = "README.md"
+dependencies = [
+  # django
+]
+
+[project.optional-dependencies]
+dev = [
+  # django-extensions
+  # ipython
+  # mypy
+  # pre-commit
+  # psycopg2
+  # pytest-django
+  # pytest-mock
+  # pytest
+  # ruff
+  # time-machine
+]
+
+
+# Mypy
+# ----
+
+[tool.mypy]
+# Specify which files to check.
+files = [
+  "src",
+]
+
+# Output.
+show_error_codes = true
+
+# Strict mode; enables the following flags:
+#   --check-untyped-defs
+#   --disallow-any-generics,
+#   --disallow-incomplete-defs
+#   --disallow-subclassing-any
+#   --disallow-untyped-calls
+#   --disallow-untyped-decorators,
+#   --disallow-untyped-defs,
+#   --no-implicit-reexport
+#   --strict-concatenate
+#   --strict-equality
+#   --warn-redundant-casts
+#   --warn-return-any
+#   --warn-unused-configs
+#   --warn-unused-ignores
+strict = true
+
+# These flags enabled by `strict` are ones we're overriding.
+disallow_subclassing_any = false
+warn_return_any = false
+
+# Enable the following optional checks.
+enable_error_code = [
+  "ignore-without-code",
+  "redundant-expr",
+  "truthy-bool",
+  "unused-awaitable",
+]
+
+# Warnings.
+warn_unreachable = true
+
+# Don't force django configuration & test functions to include types.
+[[tool.mypy.overrides]]
+module = [
+  "src.project.conf.*",
+  "src.tests.*",
+]
+allow_untyped_globals = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+# Ignore errors from packages that don't have type annotations.
+[[tool.mypy.overrides]]
+module = [
+  "django.*",
+  "setuptools.*",
+]
+ignore_missing_imports = true
+
+
+# Ruff
+# ----
+
+[tool.ruff]
+src = ["src/project"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "I",  # isort
+]
+ignore = [
+    "E501",  # line too long
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__ files as these are convenience imports
+"**/__init__.py" = [ "F401" ]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder",
+]
+
+
+# Pytest
+# ------
+
+[tool.pytest.ini_options]
+# Convert some warning types into errors but ignore some others that we
+# can't/won't fix right now.
+#
+# Note:
+# - Each line is a colon-separated string.
+# - The first part is what to do with the warning - error or ignore.
+# - The second part is a regex that must match the start of the warning message.
+# - The third part is the warning class name.
+# - The fourth part is a regex that must match the module triggering the error.
+# - The order matters. These rules get applied with the bottom rule first.
+#   Hence the rules ignoring deprecation warnings must by below the rule that converts
+#   DeprecationWarnings into errors.
+filterwarnings = [
+    "error::RuntimeWarning",
+    "error::DeprecationWarning",
+    "ignore:defusedxml.lxml:DeprecationWarning:zeep",
+    "ignore:Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3:DeprecationWarning:(graphene|singledispatch)",
+    # https://github.com/ktosiek/pytest-freezegun/issues/35
+    "ignore:distutils Version classes are deprecated:DeprecationWarning:pytest_freezegun",
+]
+
+DJANGO_SETTINGS_MODULE = "project.conf.settings"
+
+# Test modules must have be named this way.
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+
+# Default options when pytest is run:
+#
+#   --verbose      -> Show names of tests being run.
+#   --tb=short     -> Use short tracebacks.
+#                     https://docs.pytest.org/en/stable/usage.html#modifying-python-traceback-printing
+#   --nomigrations -> Disable Django's migrations and create the database by inspecting models instead.
+#                     https://pytest-django.readthedocs.io/en/latest/database.html#nomigrations-disable-django-migrations
+#   --reuse-db     -> Don't remove test database after each test run so it can be re-used next time.
+#                     https://pytest-django.readthedocs.io/en/latest/database.html#reuse-db-reuse-the-testing-database-between-test-runs
+#   --color=auto   -> Detect whether to print colored output.
+#   --capture=fd   -> Capture all output written to the STDOUT and STDERR file descriptors.
+#                     https://docs.pytest.org/en/stable/capture.html
+#
+addopts = "--tb=short --verbose --nomigrations --reuse-db --color=auto --capture=fd"
